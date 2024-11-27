@@ -148,7 +148,7 @@ def main():
         else:
             print(f"It's a tie!\nYour total: {player_total}\nDealer's total: {dealer_total}")
 
-        db.write_money_to_file(player_money)  # Update money in the file
+        db.write_money_to_file(player_money)  # Update money after the round
 
 if __name__ == "__main__":
     main()
