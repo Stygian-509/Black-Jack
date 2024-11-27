@@ -65,16 +65,21 @@ def main():
             print("You don't have enough money to continue playing!")
             break
 
-        # Prompt player for bet amount
+        # Prompt player for bet amount with added validation
         while True:
             try:
-                bet = float(input(f"You have ${player_money:.2f}. Bet amount: "))
-                if bet <= 0:
-                    print("Bet must be a positive number.")
+                bet = float(input(f"You have ${player_money:.2f}. Bet amount (Min: $5, Max: $1000): "))
+                
+                if bet < 5:
+                    print("The minimum bet is $5.")
+                elif bet > 1000:
+                    print("The maximum bet is $1000.")
                 elif bet > player_money:
-                    print("You don't have enough money to make that bet.")
+                    print(f"You don't have enough money to make that bet. You have ${player_money:.2f}.")
+                elif bet <= 0:
+                    print("Bet must be a positive number.")
                 else:
-                    break
+                    break  # Exit the loop if the bet is valid
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
 
