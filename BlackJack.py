@@ -204,8 +204,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-        db.write_money_to_file(player_money)  # Update money after the round
+    db.write_money_to_file(player_money)  # Update money after the round
 
 if __name__ == "__main__":
     main()
-    
+   
