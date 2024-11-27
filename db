@@ -1,0 +1,14 @@
+# Read the player's money from the file 'money.txt'
+def read_money_from_file():
+    try:
+        with open('money.txt', 'r') as file:
+            money = float(file.read().strip())
+            return money
+    except (FileNotFoundError, ValueError):
+        print("Error reading the file. Initializing with $100.")
+        return 100.00  # Default money amount if file is missing or corrupt
+
+# Write the player's money to the file 'money.txt'
+def write_money_to_file(money):
+    with open('money.txt', 'w') as file:
+        file.write(f"{money:.2f}")
