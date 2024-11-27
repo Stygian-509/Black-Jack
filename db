@@ -1,14 +1,25 @@
+# db.py
+
 # Read the player's money from the file 'money.txt'
 def read_money_from_file():
     try:
         with open('money.txt', 'r') as file:
             money = float(file.read().strip())
             return money
-    except (FileNotFoundError, ValueError):
-        print("Error reading the file. Initializing with $100.")
-        return 100.00  # Default money amount if file is missing or corrupt
+    except FileNotFoundError:
+        print("Money file not found. Initializing with $100.")
+        return 100.00  # Default money amount if file is missing
+    except ValueError:
+        print("Error in money file format. Initializing with $100.")
+        return 100.00  # Default money amount if file is corrupt or format is wrong
+    except Exception as e:
+        print(f"An error occurred while reading the money file: {e}")
+        return 100.00  # Default amount in case of any other error
 
 # Write the player's money to the file 'money.txt'
 def write_money_to_file(money):
-    with open('money.txt', 'w') as file:
-        file.write(f"{money:.2f}")
+    try:
+        with open('money.txt', 'w') as file:
+            file.write(f"{money:.2f}")
+    except Exception as e:
+        print(f"An error occurred while writing to the file: {e}")
