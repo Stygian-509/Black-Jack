@@ -53,6 +53,7 @@ def is_blackjack(hand):
                 return True
     return False
 
+# Main function
 def main():
     # Read the player's money from the file
     player_money = db.read_money_from_file()
@@ -63,8 +64,25 @@ def main():
     while True:
         if player_money <= 0:
             print("You don't have enough money to continue playing!")
-            break
-
+            # Prompt the player to buy more chips if they don't have enough money
+            while player_money < 5:
+                buy_chips = input("Your money is below the minimum bet of $5. Would you like to buy more chips? (yes/no): ").lower()
+                if buy_chips == 'yes':
+                    while True:
+                        try:
+                            additional_money = float(input("Enter the amount of money to add: $"))
+                            if additional_money <= 0:
+                                print("You must enter a positive number.")
+                            else:
+                                player_money += additional_money
+                                db.write_money_to_file(player_money)  # Update money in the file
+                                print(f"Your new balance is: ${player_money:.2f}")
+                                break
+                        except ValueError:
+                            print("Invalid input. Please enter a valid number.")
+                else:
+                    print("You chose not to buy more chips. Exiting the game.")
+                    return  # Exit the game if the player chooses not to buy more chips
         # Prompt player for bet amount with added validation
         while True:
             try:
@@ -157,3 +175,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
