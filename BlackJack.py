@@ -33,6 +33,14 @@ def calculate_hand_value(hand):
             value += 1
     return value
 
+def is_blackjack(hand):
+    if len(hand) == 2:
+        if 'Ace' in [card[0] for card in hand]:
+            value_cards = ['10', 'Jack', 'Queen', 'King']
+            if any(card[0] in value_cards for card in hand):
+                return True
+    return False
+
 def main():
     print_title()
     
@@ -53,6 +61,10 @@ def main():
     print(f"Your hand:\n{player_hand}\nTotal: {calculate_hand_value(player_hand)}")
     print(f"Dealer's hand:\n[{dealer_hand[0]}, ?]")
 
+    if is_blackjack(player_hand):
+        print("Blackjack! You win 1.5 times your bet.")
+        return round(bet * 1.2, 2)
+
     while calculate_hand_value(player_hand) < 21:
         move = input("Hit or stand? (hit/stand): ").lower()
         if move == 'hit':
@@ -69,6 +81,18 @@ def main():
 
     print(f"Dealer's hand:\n{dealer_hand}\nTotal: {calculate_hand_value(dealer_hand)}")
     dealer_total = calculate_hand_value(dealer_hand)
+
+    if is_blackjack(dealer_hand):
+        print("Dealer has a Blackjack!")
+        if player_total > 21:
+            print("You busted! You lose your bet.")
+            return -bet
+        elif player_total == 21:
+            print("You also have 21! It's a tie.")
+            return 0
+        else:
+            print(f"You lose!\nYour total: {player_total}\nDealer's total: {dealer_total}")
+            return -bet
     
     while dealer_total < 17:
         dealer_hand.append(deck.pop())
