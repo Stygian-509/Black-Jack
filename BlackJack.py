@@ -1,4 +1,5 @@
 import random
+import db  # Import the db module to handle money read/write
 
 # List of suits
 suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
@@ -53,77 +54,101 @@ def is_blackjack(hand):
     return False
 
 def main():
-    deck = create_deck()
-    player_hand = [deck[0].pop(), deck[1].pop()]  # Draw from the first two suits
-    dealer_hand = [deck[2].pop(), deck[3].pop()]  # Draw from the next two suits
+    # Read the player's money from the file
+    player_money = db.read_money_from_file()
+    
+    print(f"Welcome to the game! You have ${player_money:.2f} available.")
 
+    # Main game loop
     while True:
-        try:
-            bet = float(input("Bet amount: "))
-            if bet <= 0:
-                print("Bet must be a positive number.")
-            else:
-                break
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
-
-    print(f"Your hand:\n{[(card[0], card[1]) for card in player_hand]}\nTotal: {calculate_hand_value(player_hand)}")
-    print(f"Dealer's hand:\n[{dealer_hand[0][0]} of {dealer_hand[0][1]}, ?]")
-
-    # Check for player blackjack right away
-    if is_blackjack(player_hand):
-        print("Blackjack! You win 1.5 times your bet.")
-        return round(bet * 1.5, 2)
-
-    while calculate_hand_value(player_hand) < 21:
-        move = input("Hit or stand? (hit/stand): ").lower()
-        if move == 'hit':
-            player_hand.append(deck[0].pop())  # Draw from the first suit
-            print(f"You drew: {player_hand[-1][0]} of {player_hand[-1][1]}")
-            print(f"Your hand:\n{[(card[0], card[1]) for card in player_hand]}\nTotal: {calculate_hand_value(player_hand)}")
-        elif move == 'stand':
+        if player_money <= 0:
+            print("You don't have enough money to continue playing!")
             break
 
-    player_total = calculate_hand_value(player_hand)
-    if player_total > 21:
-        print("You busted! You lose your bet.")
-        return -bet
+        # Prompt player for bet amount
+        while True:
+            try:
+                bet = float(input(f"You have ${player_money:.2f}. Bet amount: "))
+                if bet <= 0:
+                    print("Bet must be a positive number.")
+                elif bet > player_money:
+                    print("You don't have enough money to make that bet.")
+                else:
+                    break
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
 
-    print(f"Dealer's hand:\n{[(card[0], card[1]) for card in dealer_hand]}\nTotal: {calculate_hand_value(dealer_hand)}")
-    dealer_total = calculate_hand_value(dealer_hand)
-    
-    # Check for dealer blackjack
-    if is_blackjack(dealer_hand):
-        print("Dealer has a Blackjack!")
+        # Create a new deck and deal hands
+        deck = create_deck()
+        player_hand = [deck[0].pop(), deck[1].pop()]  # Draw from the first two suits
+        dealer_hand = [deck[2].pop(), deck[3].pop()]  # Draw from the next two suits
+
+        print(f"Your hand:\n{[(card[0], card[1]) for card in player_hand]}\nTotal: {calculate_hand_value(player_hand)}")
+        print(f"Dealer's hand:\n[{dealer_hand[0][0]} of {dealer_hand[0][1]}, ?]")
+
+        # Check for player blackjack right away
+        if is_blackjack(player_hand):
+            print("Blackjack! You win 1.5 times your bet.")
+            winnings = round(bet * 1.5, 2)
+            player_money += winnings
+            db.write_money_to_file(player_money)  # Update money in the file
+            continue
+
+        while calculate_hand_value(player_hand) < 21:
+            move = input("Hit or stand? (hit/stand): ").lower()
+            if move == 'hit':
+                player_hand.append(deck[0].pop())  # Draw from the first suit
+                print(f"You drew: {player_hand[-1][0]} of {player_hand[-1][1]}")
+                print(f"Your hand:\n{[(card[0], card[1]) for card in player_hand]}\nTotal: {calculate_hand_value(player_hand)}")
+            elif move == 'stand':
+                break
+
+        player_total = calculate_hand_value(player_hand)
         if player_total > 21:
             print("You busted! You lose your bet.")
-            return -bet
-        elif player_total == 21:
-            print("You also have 21! It's a tie.")
-            return 0
-        else:
-            print(f"You lose! Your total: {player_total} | Dealer's total: {dealer_total}")
-            return -bet
+            player_money -= bet
+            db.write_money_to_file(player_money)  # Update money in the file
+            continue
 
-    while dealer_total < 17:
-        dealer_hand.append(deck[0].pop())  # Dealer draws from the first suit
+        print(f"Dealer's hand:\n{[(card[0], card[1]) for card in dealer_hand]}\nTotal: {calculate_hand_value(dealer_hand)}")
         dealer_total = calculate_hand_value(dealer_hand)
-        print(f"Dealer draws: {dealer_hand[-1][0]} of {dealer_hand[-1][1]}")
-        print(f"Dealer's hand:\n{[(card[0], card[1]) for card in dealer_hand]}\nTotal: {dealer_total}")
 
-        if dealer_total > 21:
-            print("Dealer busted! You win your bet.")
-            return bet
+        # Check for dealer blackjack
+        if is_blackjack(dealer_hand):
+            print("Dealer has a Blackjack!")
+            if player_total > 21:
+                print("You busted! You lose your bet.")
+                player_money -= bet
+            elif player_total == 21:
+                print("You also have 21! It's a tie.")
+            else:
+                print(f"You lose! Your total: {player_total} | Dealer's total: {dealer_total}")
+                player_money -= bet
+            db.write_money_to_file(player_money)  # Update money in the file
+            continue
 
-    if player_total > dealer_total:
-        print(f"You win!\nYour total: {player_total}\nDealer's total: {dealer_total}")
-        return bet
-    elif player_total < dealer_total:
-        print(f"You lose!\nYour total: {player_total}\nDealer's total: {dealer_total}")
-        return -bet
-    else:
-        print(f"It's a tie!\nYour total: {player_total}\nDealer's total: {dealer_total}")
-        return 0
+        while dealer_total < 17:
+            dealer_hand.append(deck[0].pop())  # Dealer draws from the first suit
+            dealer_total = calculate_hand_value(dealer_hand)
+            print(f"Dealer draws: {dealer_hand[-1][0]} of {dealer_hand[-1][1]}")
+            print(f"Dealer's hand:\n{[(card[0], card[1]) for card in dealer_hand]}\nTotal: {dealer_total}")
+
+            if dealer_total > 21:
+                print("Dealer busted! You win your bet.")
+                player_money += bet
+                db.write_money_to_file(player_money)  # Update money in the file
+                continue
+
+        if player_total > dealer_total:
+            print(f"You win!\nYour total: {player_total}\nDealer's total: {dealer_total}")
+            player_money += bet
+        elif player_total < dealer_total:
+            print(f"You lose!\nYour total: {player_total}\nDealer's total: {dealer_total}")
+            player_money -= bet
+        else:
+            print(f"It's a tie!\nYour total: {player_total}\nDealer's total: {dealer_total}")
+
+        db.write_money_to_file(player_money)  # Update money in the file
 
 if __name__ == "__main__":
     main()
